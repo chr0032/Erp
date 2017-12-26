@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/mvc"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.3.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd">
+	
+	<!-- 주석문의 사용 허가 -->
+	<annotation-driven/>	
+
+	<!--
+		bean태그 사용 == 클래스 생성
+		InternalResourceViewResolver viewResolber = new InternalResourceViewResolver();
+		이것과 같은 뜻 
+		
+		prefix = "/WEB-INF/views/"
+	 -->
+	 <!-- 뷰의 해결사 (하나의 창에서 사용) -->
+	<beans:bean id="viewResolver"
+		class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/views/"/>
+		<beans:property name="suffix" value=".jsp"/>
+	</beans:bean> 
+	
+	
+	<!-- 패키지를 등록 -->
+	<!-- 컨트롤러가 어느 패키지안에 있는지 알려줌 -->
+	<context:component-scan base-package="erp.com"/>
+	
+	<!-- application context 안에 이미 등록된 bean들의 Annotation을 활성화 하기 위해 사용 -->
+	<context:annotation-config/>
+	
+	<!-- 스프링에서 처리할 수 없는 요청은 톰캣에 위임하는 설정 -->
+	<default-servlet-handler/>
+	
+</beans:beans>
+
+
+
+
+
+
+
+
+

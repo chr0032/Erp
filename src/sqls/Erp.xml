@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">  
+  
+<mapper namespace="Erp">
+
+<select id="selectAll" resultType="erp.com.model.StaffDto" parameterType="erp.com.model.StaffDto">
+	SELECT *
+    FROM (SELECT STAFF_NO, STAFF_NAME, JUMIN_NO, SCHOOL_CODE, RELIGION_CODE, GRADUATE_DAY,
+    		ROW_NUMBER() OVER(ORDER BY STAFF_NO ASC) R
+			FROM STAFF)
+    WHERE R BETWEEN #{start} and #{end}
+</select>
+
+<select id="select" parameterType="erp.com.model.AllDto" resultType="erp.com.model.StaffDto">
+	SELECT A.STAFF_NO, A.STAFF_NAME, A.JUMIN_NO, A.RELIGION_CODE, A.GRADUATE_DAY
+	
+	FROM (SELECT S.STAFF_NO, S.STAFF_NAME, S.JUMIN_NO, S.SCHOOL_CODE, S.RELIGION_CODE, S.GRADUATE_DAY,
+    		ROW_NUMBER() OVER(ORDER BY S.STAFF_NO ASC) R
+    		
+			FROM STAFF S, STAFF_SKILL SK
+			WHERE 
+				1=1
+				<if test="staff_name != null">
+					AND S.STAFF_NAME like ('%'||#{staff_name}||'%')
+		        </if>        
+		        <if test="religion_code != 0 and religion_code != ''">
+					AND RELIGION_CODE=#{religion_code}
+		        </if>
+		        
+				<if test="jumin_no_2 != '' and jumin_no_2 != null">
+					AND (SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_1} OR SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_2})
+				</if>
+				<if test="(jumin_no_2 == '' or jumin_no_2 == null) and jumin_no_1 != ''">
+					AND SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_1}
+				</if>
+				        
+				<if test="start_date != '' and start_date != null">
+					AND TO_DATE(GRADUATE_DAY, 'YYYY-MM-DD') BETWEEN 
+					TO_DATE(#{start_date},'YYYY-MM-DD') and TO_DATE(#{end_date}, 'YYYY-MM-DD')
+				</if>
+				
+				<if test="skill_code_6 != 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3},#{skill_code_4},
+											#{skill_code_5},#{skill_code_6})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_5 != 0 and skill_code_6 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3},#{skill_code_4},#{skill_code_5})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_4 != 0 and skill_code_6 == 0 and skill_code_5 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3}, #{skill_code_4})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_3 != 0 and skill_code_6 == 0 and skill_code_5 == 0 and skill_code_4 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_2 != 0 and skill_code_6 == 0 and
+							skill_code_5 == 0 and skill_code_4 == 0 and skill_code_3 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				
+				<if test="add_skill != 0 and add_skill_condi == 'and'">
+					AND SK.SKILL_CODE IN (#{add_skill})
+				</if>
+			
+				<if test="school_code_4 != 0">
+					AND SCHOOL_CODE IN (#{school_code_2},#{school_code_3}, #{school_code_4})
+				</if>
+				<if test="school_code_3 != 0 and school_code_4 == 0">
+					AND SCHOOL_CODE IN (#{school_code_2},#{school_code_3})
+				</if>
+				<if test="school_code_2 != 0 and school_code_3 == 0 and school_code_4 == 0">
+					AND SCHOOL_CODE IN (#{school_code_2})
+				</if>
+			GROUP BY S.STAFF_NO, S.STAFF_NAME, S.JUMIN_NO, S.SCHOOL_CODE, S.RELIGION_CODE, S.GRADUATE_DAY)A 
+	WHERE R BETWEEN ${start} AND ${end}     
+</select>
+
+<insert id="insertStaff" parameterType="erp.com.model.StaffDto">
+ 	INSERT INTO STAFF(staff_no, staff_name, jumin_no, school_code, religion_code, graduate_day)
+	VALUES(staff_seq.NEXTVAL, #{staff_name}, #{jumin_no}, TO_NUMBER(#{school_code}), #{religion_code}, #{graduate_day})
+</insert>
+
+<insert id="insertSkill" parameterType="erp.com.model.Staff_SkillDto">
+	INSERT INTO STAFF_SKILL(staff_skill_no, staff_no, skill_code)
+	VALUES(staff_skill_seq.NEXTVAL,(SELECT NVL(MAX(staff_no),1) FROM staff), #{skill_code})
+</insert>
+
+<select id="getStaff" parameterType="java.lang.Integer" resultType="erp.com.model.StaffDto">
+	SELECT staff_no, staff_name, jumin_no, school_code, religion_code, graduate_day
+	FROM STAFF
+	WHERE staff_no=#{seq}
+</select>
+
+<select id="getSkill" parameterType="java.lang.Integer" resultType="erp.com.model.Staff_SkillDto">
+	SELECT staff_skill_no, staff_no, skill_code
+	FROM STAFF_SKILL
+	WHERE staff_no=#{seq}
+</select>
+
+<delete id="deleteSkill" parameterType="java.lang.Integer">
+	DELETE FROM STAFF_SKILL
+	WHERE STAFF_NO=#{seq}
+</delete>
+
+<delete id="deleteStaff" parameterType="java.lang.Integer">
+	DELETE FROM STAFF
+	WHERE STAFF_NO=#{seq}
+</delete>
+
+<update id="updateStaff" parameterType="erp.com.model.StaffDto">
+	UPDATE STAFF
+	SET STAFF_NAME=#{staff_name}, JUMIN_NO=#{jumin_no}, SCHOOL_CODE=TO_NUMBER(#{school_code}),
+		RELIGION_CODE=#{religion_code}, GRADUATE_DAY=#{graduate_day}
+	WHERE STAFF_NO=#{staff_no}
+</update>
+
+<insert id="re_insertSkill" parameterType="erp.com.model.Staff_SkillDto">
+	INSERT INTO STAFF_SKILL(staff_skill_no, staff_no, skill_code)
+	VALUES(staff_skill_seq.NEXTVAL, #{staff_no}, #{skill_code})
+</insert>
+
+<select id="getCount" resultType="java.lang.Integer">
+	SELECT NVL(COUNT(*), 0)
+	FROM STAFF
+</select>
+
+<select id="selectCount" parameterType="erp.com.model.AllDto" resultType="java.lang.Integer">
+	SELECT NVL(COUNT(*), 0) AS CNT
+	FROM (SELECT S.STAFF_NAME, S.JUMIN_NO, S.RELIGION_CODE, S.GRADUATE_DAY
+			FROM STAFF S, STAFF_SKILL SK
+			WHERE 
+				1=1
+				<if test="staff_name != null">
+					AND S.STAFF_NAME like ('%'||#{staff_name}||'%')
+		        </if>        
+		        <if test="religion_code != 0 and religion_code != ''">
+					AND RELIGION_CODE=#{religion_code}
+		        </if>
+		        
+				<if test="jumin_no_2 != '' and jumin_no_2 != null">
+					AND (SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_1} OR SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_2})
+				</if>
+				<if test="(jumin_no_2 == '' or jumin_no_2 == null) and jumin_no_1 != ''">
+					AND SUBSTR(JUMIN_NO, 8,1)=#{jumin_no_1}
+				</if>
+				        
+				<if test="start_date != '' and start_date != null">
+					AND TO_DATE(GRADUATE_DAY, 'YYYY-MM-DD') BETWEEN 
+					TO_DATE(#{start_date},'YYYY-MM-DD') and TO_DATE(#{end_date}, 'YYYY-MM-DD')
+				</if>
+				
+				<if test="skill_code_6 != 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3},#{skill_code_4},
+											#{skill_code_5},#{skill_code_6})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_5 != 0 and skill_code_6 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3},#{skill_code_4},#{skill_code_5})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_4 != 0 and skill_code_6 == 0 and skill_code_5 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3}, #{skill_code_4})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_3 != 0 and skill_code_6 == 0 and skill_code_5 == 0 and skill_code_4 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2},#{skill_code_3})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				<if test="skill_code_2 != 0 and skill_code_6 == 0 and
+							skill_code_5 == 0 and skill_code_4 == 0 and skill_code_3 == 0">
+					AND SK.SKILL_CODE IN (#{skill_code_2})
+					AND S.STAFF_NO = SK.STAFF_NO
+				</if>
+				
+				<if test="school_code_4 != 0">
+					AND SCHOOL_CODE IN (#{school_code_2},#{school_code_3}, #{school_code_4})
+				</if>
+				<if test="school_code_3 != 0 and school_code_4 == 0">
+					AND SCHOOL_CODE IN (#{school_code_2},#{school_code_3})
+				</if>
+				<if test="school_code_2 != 0 and school_code_3 == 0 and school_code_4 == 0">
+					AND SCHOOL_CODE IN (#{school_code_2})
+				</if> 
+			GROUP BY S.STAFF_NAME, S.JUMIN_NO, S.RELIGION_CODE, S.GRADUATE_DAY)
+</select>
+
+</mapper>
+
+
+
+
+
+
+
+
